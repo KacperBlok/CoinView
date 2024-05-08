@@ -36,7 +36,7 @@ const CoinsTable = () => {
           },
           type: "dark",
         },
-      });
+      }); 
 
       const handleSearch = () => {
         return coins.filter(
