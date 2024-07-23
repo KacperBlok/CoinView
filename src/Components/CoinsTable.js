@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { CoinList } from '../config/api';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CryptoState } from '../CryptoContext';
 import axios from 'axios';
 import { Container, createTheme, TextField, ThemeProvider, Typography, TableContainer, LinearProgress, TableHead, TableRow, TableCell, TableBody, makeStyles } from '@material-ui/core';
@@ -49,16 +48,24 @@ const CoinsTable = () => {
     const { currency } = CryptoState();
     const classes = useStyles();
 
-    const fetchCoins = async () => {
+    const fetchCoins = useCallback(async () => {
         setLoading(true);
-        const { data } = await axios.get(CoinList(currency));
-        setCoins(data);
+        try {
+            const { data } = await axios.get('http://localhost:4000/api/data', {
+                params: {
+                    currency: currency
+                }
+            });
+            setCoins(data.coinList);
+        } catch (error) {
+            console.error('Error fetching coin data:', error);
+        }
         setLoading(false);
-    };
+    }, [currency]);
 
     useEffect(() => {
         fetchCoins();
-    }, [currency]);
+    }, [fetchCoins]);
 
     const darkTheme = createTheme({
         palette: {
@@ -112,8 +119,8 @@ const CoinsTable = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {handleSearch().slice((page - 1) * 10,(page - 1) * 10 + 10).map((row) => {
-                                    const profit = row.price_change_percentage_24h > 0;
+                                {handleSearch().slice((page - 1) * 10, (page - 1) * 10 + 10).map((row) => {
+                                    const profit = row.price_change_percentage_24h && row.price_change_percentage_24h > 0;
                                     return (
                                         <TableRow
                                             onClick={() => navigate(`/coin/${row.id}`)}
@@ -134,13 +141,17 @@ const CoinsTable = () => {
                                                 }).format(row.current_price)}
                                             </TableCell>
                                             <TableCell align="right" style={{ color: profit ? "green" : "red" }}>
-                                                {row.price_change_percentage_24h.toFixed(2)}%
+                                                {row.price_change_percentage_24h !== undefined && row.price_change_percentage_24h !== null
+                                                    ? row.price_change_percentage_24h.toFixed(2)
+                                                    : "N/A"}%
                                             </TableCell>
                                             <TableCell align="right">
-                                                {new Intl.NumberFormat('en-US', {
-                                                    style: 'currency',
-                                                    currency: currency,
-                                                }).format(row.market_cap).slice(0, -3)}M
+                                                {row.market_cap !== null
+                                                    ? new Intl.NumberFormat('en-US', {
+                                                        style: 'currency',
+                                                        currency: currency,
+                                                    }).format(row.market_cap).slice(0, -3) + 'M'
+                                                    : "N/A"}
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -149,20 +160,20 @@ const CoinsTable = () => {
                         </Table>
                     )}
                 </TableContainer>
-                    <Pagination
-                    style ={{
+                <Pagination
+                    style={{
                         padding: 20,
                         width: "100%",
                         display: "flex",
                         justifyContent: "center",
                     }}
                     classes={{ ul: classes.pagination }}
-                    count={(handleSearch()?.length / 10).toFixed(0)}
-                    onChange={(_, value) => {setPage(value)
+                    count={Math.ceil(handleSearch().length / 10)}
+                    onChange={(_, value) => {
                         setPage(value);
                         window.scrollTo(0, 450);
                     }}
-                    />
+                />
             </Container>
         </ThemeProvider>
     );

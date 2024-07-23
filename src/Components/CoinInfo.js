@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CryptoState } from '../CryptoContext';
-import { HistoricalChart } from '../config/api';
+import SelectButton from './SelectButton';
+import { Line } from 'react-chartjs-2';
 import { createTheme, makeStyles, ThemeProvider } from '@material-ui/core';
 import axios from 'axios';
 import { Oval } from 'react-loader-spinner';
-import SelectButton from './SelectButton';
-import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   LineElement,
@@ -28,20 +27,38 @@ ChartJS.register(
 );
 
 const CoinInfo = ({ coin }) => {
-  const [HistoricalData, setHistoricalData] = useState();
+  const [historicalData, setHistoricalData] = useState([]);
   const [days, setDays] = useState(1);
 
   const { currency } = CryptoState();
 
-  const fetchHistoricalData = async () => {
-    const { data } = await axios.get(HistoricalChart(coin.id, days, currency));
-    setHistoricalData(data.prices);
-  };
+  // Funkcja do pobierania danych historycznych
+  const fetchHistoricalData = useCallback(async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:4000/api/historical?id=${id}&days=${days}&currency=${currency}`);
+      const data = response.data;
 
+      // Walidacja formatu danych
+      if (!data.prices || !Array.isArray(data.prices) || !data.prices.every(item => Array.isArray(item) && item.length === 2)) {
+        console.error('Invalid data format:', data);
+        return;
+      }
+
+      console.log('Fetched historical data:', data.prices); // Sprawdź strukturę danych
+      setHistoricalData(data.prices); 
+    } catch (error) {
+      console.error('Error fetching historical data:', error);
+    }
+  }, [days, currency]);
+
+  // Efekt do pobierania danych po zmianie ID, dni lub waluty
   useEffect(() => {
-    fetchHistoricalData();
-  }, [currency, days]);
+    if (coin?.id) {
+      fetchHistoricalData(coin.id);
+    }
+  }, [coin?.id, days, currency, fetchHistoricalData]);
 
+  // Temat ciemny dla wykresu
   const darkTheme = createTheme({
     palette: {
       primary: {
@@ -51,6 +68,7 @@ const CoinInfo = ({ coin }) => {
     },
   });
 
+  // Stylizacja za pomocą Material-UI
   const useStyles = makeStyles((theme) => ({
     container: {
       display: 'flex',
@@ -67,6 +85,17 @@ const CoinInfo = ({ coin }) => {
         paddingTop: 0,
       },
     },
+    chartContainer: {
+      position: 'relative',
+      width: '100%',
+      height: '400px', // Ustaw wysokość kontenera wykresu
+    },
+    buttonContainer: {
+      display: 'flex',
+      width: '100%',
+      justifyContent: 'space-around',
+      marginTop: 20,
+    },
   }));
 
   const classes = useStyles();
@@ -74,13 +103,13 @@ const CoinInfo = ({ coin }) => {
   return (
     <ThemeProvider theme={darkTheme}>
       <div className={classes.container}>
-        {!HistoricalData ? (
-          <Oval color="#00BFFF" height={80} width={80} />
-        ) : (
-          <>
+        <div className={classes.chartContainer}>
+          {!historicalData.length ? (
+            <Oval color="#00BFFF" height={80} width={80} />
+          ) : (
             <Line
               data={{
-                labels: HistoricalData.map((coin) => {
+                labels: historicalData.map((coin) => {
                   let date = new Date(coin[0]);
                   let time =
                     date.getHours() > 12
@@ -90,41 +119,40 @@ const CoinInfo = ({ coin }) => {
                 }),
                 datasets: [
                   {
-                    data: HistoricalData.map((coin) => coin[1]),
+                    data: historicalData.map((coin) => coin[1]),
                     label: `Price (Past ${days} days) in ${currency}`,
                     borderColor: '#00BFFF',
+                    fill: false, // Nie wypełnia pod wykresem
                   },
                 ],
               }}
               options={{
-                elements:{
-                  point:{
-                      radius: 1,
+                elements: {
+                  point: {
+                    radius: 1,
                   }
-                }
-              }}  
-            />
-            <div
-            style={{
-                display: 'flex',
-                width: '100%',
-                justifyContent:'space-around',
-                marginTop: 20,
+                },
+                responsive: true,
+                maintainAspectRatio: false,
               }}
-            >{chartDays.map(day =>
-              <SelectButton
-                key={day.value}
-                onClick={() => setDays(day.value)}
-                selected={days === day.value}
-
-              >{day.label}</SelectButton>
-            )}
-            </div>
-          </>
-        )}
+            />
+          )}
+        </div>
+        <div className={classes.buttonContainer}>
+          {chartDays.map(day =>
+            <SelectButton
+              key={day.value}
+              onClick={() => setDays(day.value)}
+              selected={days === day.value}
+            >
+              {day.label}
+            </SelectButton>
+          )}
+        </div>
       </div>
     </ThemeProvider>
   );
 };
 
 export default CoinInfo;
+

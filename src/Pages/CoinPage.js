@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CryptoState } from '../CryptoContext';
-import { SingleCoin } from '../config/api';
 import axios from 'axios';
 import { makeStyles, Typography } from '@material-ui/core';
 import CoinInfo from '../Components/CoinInfo';
 import { Oval } from 'react-loader-spinner';
 import { numberWithCommas } from '../utils/helpers';
+import HtmlReactParser from 'html-react-parser';
 
 const CoinPage = () => {
   const { id } = useParams();
@@ -14,14 +14,19 @@ const CoinPage = () => {
 
   const { currency, symbol } = CryptoState();
 
-  const fetchCoin = async () => {
-    const { data } = await axios.get(SingleCoin(id));
-    setCoin(data);
+  // Function to fetch coin details from local server
+  const fetchCoinDetails = async () => {
+    try {
+      const response = await axios.get(`http://localhost:4000/api/coin-details?id=${id}&currency=${currency}`);
+      setCoin(response.data);
+    } catch (error) {
+      console.error('Error fetching coin details:', error);
+    }
   };
 
   useEffect(() => {
-    fetchCoin();
-  }, [id]); // Add id to dependency array to refetch on id change
+    fetchCoinDetails();
+  }, [id, currency]); // Add currency to dependency array to refetch on currency change
 
   const useStyles = makeStyles((theme) => ({
     container: {
@@ -61,15 +66,15 @@ const CoinPage = () => {
       fontFamily: "Montserrat",
       width: "100%",
       padding: 20,
-      paddingBottom : 15,
+      paddingBottom: 15,
       textAlign: "justify",
     },
     marketdata: {
-      alignSelf:"start",
+      alignSelf: "start",
       padding: 25,
       paddingTop: 10,
       width: "100%",
-      //responsive
+      // Responsive
       [theme.breakpoints.down('md')]: {
         display: "flex",
         justifyContent: "space-around",
@@ -79,7 +84,7 @@ const CoinPage = () => {
         alignItems: "center",
       },
       [theme.breakpoints.down('xs')]: {
-       alignItems: "start",
+        alignItems: "start",
       }
     }
   }));
@@ -108,8 +113,11 @@ const CoinPage = () => {
           {coin.name}
         </Typography>
         <Typography variant='body1' className={classes.description}>
-          {coin.description?.en?.split('.')[0] + '.'}
+          {HtmlReactParser(coin.description?.en
+            ? coin.description.en.split('. ')[0] + '.' // First sentence of description
+            : 'Description not available.')}
         </Typography>
+
         <div className={classes.marketdata}>
           <span style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
             <Typography variant='h5' className={classes.heading}>
