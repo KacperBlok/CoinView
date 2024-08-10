@@ -1,5 +1,7 @@
 import React, {  createContext, useContext, useEffect, useState, useCallback } from 'react'
 import axios from 'axios';
+import { type } from '@testing-library/user-event/dist/type';
+import { Message } from '@material-ui/icons';
 
 const Crypto = createContext()
 const CryptoContext = ( {children}) => {
@@ -9,6 +11,12 @@ const[symbol, setSymbol] = useState("$")
 const [coins, setCoins] = useState([]);
 const [loading, setLoading] = useState(false);
 const [user, setUser] = useState(null);
+
+const [alert, setAlert] = useState({
+    open: false,
+    Message: '',
+    type: 'success',
+})
 
 
 const fetchCoins = useCallback(async () => {
@@ -38,7 +46,7 @@ const fetchCoins = useCallback(async () => {
         }
     }, [currency]);
 
-  return <Crypto.Provider value={{currency, symbol, setCurrency, coins, loading, fetchCoins}}>
+  return <Crypto.Provider value={{currency, symbol, setCurrency, coins, loading, fetchCoins,alert, setAlert}}>
     {children}
     </Crypto.Provider>
   

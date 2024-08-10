@@ -61,7 +61,7 @@ const Carousel = () => {
           &nbsp;
           <span
             style={{
-              color: profit ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 0, 0, 0.8)",
+              color: profit ? "rgba(0, 255, 0, 0.8)" : "rgba(255, 0, 0, 0.8)",
               fontWeight: 500,
             }}>
             {profit && "+"} {coin.price_change_percentage_24h.toFixed(2)}%
