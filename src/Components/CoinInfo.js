@@ -35,7 +35,7 @@ const CoinInfo = ({ coin }) => {
   // Funkcja do pobierania danych historycznych
   const fetchHistoricalData = useCallback(async (id) => {
     try {
-      const response = await axios.get(`http://localhost:4000/api/historical?id=${id}&days=${days}&currency=${currency}`);
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/historical?id=${id}&days=${days}&currency=${currency}`);
       const data = response.data;
 
       // Walidacja formatu danych

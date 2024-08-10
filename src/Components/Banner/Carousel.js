@@ -35,7 +35,7 @@ const Carousel = () => {
   const fetchTrendingCoins = useCallback(async () => {
     try {
       console.log(`Fetching trending coins for currency: ${currency}`);
-      const { data } = await axios.get(`http://localhost:4000/api/trending?currency=${currency}`);
+      const { data } = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/trending?currency=${currency}`);
       setTrending(data);
     } catch (error) {
       console.error("Error fetching trending coins:", error);
@@ -50,7 +50,7 @@ const Carousel = () => {
     const profit = coin.price_change_percentage_24h >= 0;
 
     return (
-      <Link className={classes.carouselItem} to={`/coins/${coin.id}`} key={coin.id}>
+      <Link className={classes.carouselItem} to={`/coin/${coin.id}`} key={coin.id}>
         <img
           src={coin.image}
           alt={coin.name}

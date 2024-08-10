@@ -2,6 +2,7 @@ import React from "react";
 import { AppBar, Container, MenuItem, makeStyles, createTheme, Select, Toolbar, Typography, ThemeProvider } from "@material-ui/core";
 import { useNavigate } from 'react-router-dom'; 
 import { CryptoState } from "../CryptoContext";
+import AuthModal from "./Authentication/AuthModal";
 
 const useStyles = makeStyles(() => ({
   title: {
@@ -41,12 +42,14 @@ const Header = () => {
           >
             CoinView
           </Typography>
+          
           <Select
             variant="outlined"
             style={{
               width: 100,
               height: 40,
-              marginRight: 15,
+              marginRight: 10,
+              marginLeft: 10,
             }}
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
@@ -55,6 +58,8 @@ const Header = () => {
             <MenuItem value={"EUR"}>EUR</MenuItem>
             <MenuItem value={"PLN"}>PLN</MenuItem>
           </Select>
+
+          <AuthModal></AuthModal>
         </Toolbar>
       </Container>
     </AppBar>

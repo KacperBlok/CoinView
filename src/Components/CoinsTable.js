@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, } from 'react';
 import { CryptoState } from '../CryptoContext';
-import axios from 'axios';
+
 import { Container, createTheme, TextField, ThemeProvider, Typography, TableContainer, LinearProgress, TableHead, TableRow, TableCell, TableBody, makeStyles } from '@material-ui/core';
 import { useNavigate } from 'react-router-dom';
 import { Table } from '@material-ui/core';
@@ -39,29 +39,13 @@ const useStyles = makeStyles(() => ({
 }));
 
 const CoinsTable = () => {
-    const [coins, setCoins] = useState([]);
-    const [loading, setLoading] = useState(false);
+    
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
 
     const navigate = useNavigate();
-    const { currency } = CryptoState();
+    const { currency, coins, loading, fetchCoins  } = CryptoState();
     const classes = useStyles();
-
-    const fetchCoins = useCallback(async () => {
-        setLoading(true);
-        try {
-            const { data } = await axios.get('http://localhost:4000/api/data', {
-                params: {
-                    currency: currency
-                }
-            });
-            setCoins(data.coinList);
-        } catch (error) {
-            console.error('Error fetching coin data:', error);
-        }
-        setLoading(false);
-    }, [currency]);
 
     useEffect(() => {
         fetchCoins();

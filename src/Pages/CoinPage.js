@@ -17,7 +17,7 @@ const CoinPage = () => {
   // Function to fetch coin details from local server
   const fetchCoinDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:4000/api/coin-details?id=${id}&currency=${currency}`);
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/coin-details?id=${id}&currency=${currency}`);
       setCoin(response.data);
     } catch (error) {
       console.error('Error fetching coin details:', error);
