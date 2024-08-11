@@ -28,6 +28,8 @@ const SignUp = ({ handleClose }) => {
         password
       );
 
+        console.log(result);
+
       setAlert({
         open: true,
         message: `Account created successfully for ${result.user.email}.`,
@@ -39,7 +41,7 @@ const SignUp = ({ handleClose }) => {
     } catch (error) {
       setAlert({
         open: true,
-        type: 'error',
+        type: 'error :(',
         message: error.message,
       });
     }

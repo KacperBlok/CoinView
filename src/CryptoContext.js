@@ -2,6 +2,8 @@ import React, {  createContext, useContext, useEffect, useState, useCallback } f
 import axios from 'axios';
 import { type } from '@testing-library/user-event/dist/type';
 import { Message } from '@material-ui/icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
 
 const Crypto = createContext()
 const CryptoContext = ( {children}) => {
@@ -18,6 +20,15 @@ const [alert, setAlert] = useState({
     type: 'success',
 })
 
+useEffect(() => {
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            setUser(user);
+        } else {
+            setUser(null);
+        }
+    });
+}, []);
 
 const fetchCoins = useCallback(async () => {
     setLoading(true);
@@ -46,7 +57,7 @@ const fetchCoins = useCallback(async () => {
         }
     }, [currency]);
 
-  return <Crypto.Provider value={{currency, symbol, setCurrency, coins, loading, fetchCoins,alert, setAlert}}>
+  return <Crypto.Provider value={{currency, symbol, setCurrency, coins, loading, fetchCoins,alert, setAlert, user}}>
     {children}
     </Crypto.Provider>
   
