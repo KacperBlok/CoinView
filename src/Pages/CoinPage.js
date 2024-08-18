@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CryptoState } from '../CryptoContext';
 import axios from 'axios';
-import { makeStyles, Typography } from '@material-ui/core';
+import { Button, makeStyles, Typography } from '@material-ui/core';
 import CoinInfo from '../Components/CoinInfo';
 import { Oval } from 'react-loader-spinner';
 import { numberWithCommas } from '../utils/helpers';
 import HtmlReactParser from 'html-react-parser';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const CoinPage = () => {
   const { id } = useParams();
   const [coin, setCoin] = useState(null); // Initialize coin state as null
 
-  const { currency, symbol } = CryptoState();
+  const { currency, symbol, user, watchlist, setAlert } = CryptoState();
 
   // Function to fetch coin details from local server
   const fetchCoinDetails = async () => {
@@ -75,19 +77,84 @@ const CoinPage = () => {
       paddingTop: 10,
       width: "100%",
       // Responsive
-      [theme.breakpoints.down('md')]: {
-        display: "flex",
-        justifyContent: "space-around",
-      },
+      
       [theme.breakpoints.down('sm')]: {
+        flexDirection: "column",
+        alignItems: "center",
+      },
+      [theme.breakpoints.down("md")]: {
+        display: "flex",
         flexDirection: "column",
         alignItems: "center",
       },
       [theme.breakpoints.down('xs')]: {
         alignItems: "start",
-      }
+      },
     }
+
   }));
+
+  const inWatchlist = watchlist?.includes(coin?.id);  
+
+  const addtoWatchlist = async () => {
+    if (!coin?.id || !user?.uid) {
+      console.error("Invalid data: Cannot add to watchlist");
+      return;
+    }
+  
+    const coinRef = doc(db, "watchlist", user.uid);
+  
+    try {
+      await setDoc(coinRef, {
+        coins: watchlist ? [...watchlist, coin.id] : [coin.id],
+      });
+  
+      setAlert({
+        open: true,
+        message: `${coin.name} added to watchlist`,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error adding to watchlist:", error);
+      setAlert({
+        open: true,
+        message: `Error adding ${coin.name} to watchlist`,
+        type: "error",
+      });
+    }
+  };
+
+  const removeFromWathclist = async () => {
+    if (!coin?.id || !user?.uid) {
+      console.error("Invalid data: Cannot remove from watchlist");
+      return;
+    }
+
+    const coinRef = doc(db, "watchlist", user.uid);
+
+    try {
+      await setDoc(coinRef, {
+        coins: watchlist?.filter((watch) => watch !== coin?.id),
+      }, 
+      { merge: true }
+    );
+
+      setAlert({
+        open: true,
+        message: `${coin.name} removed from watchlist`,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error removing from watchlist:", error);
+      setAlert({
+        open: true,
+        message: `Error removing ${coin.name} from watchlist`,
+        type: "error",
+      });
+    }
+  };
+  
+
   const classes = useStyles();
 
   if (!coin) {
@@ -169,6 +236,26 @@ const CoinPage = () => {
               {coin.market_data?.market_cap && numberWithCommas(coin.market_data.market_cap[currency.toLowerCase()])}
             </Typography>
           </span>
+
+          {user && (
+            <Button
+              variant='outlined'
+              style={{
+                backgroundColor: inWatchlist ? "red" : "#EEBC1D",
+                color: "#000",
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                width: "100%",
+                "&:hover": {
+                  backgroundColor: "grey",
+                }}}
+                onClick={inWatchlist? removeFromWathclist :  addtoWatchlist}
+            >
+            {inWatchlist? "Remove from Watchlist": "Add to Watchlist"}
+            </Button>
+              
+          )}
+          
         </div>
       </div>
       {/* Chart */}

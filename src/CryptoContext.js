@@ -1,9 +1,8 @@
 import React, {  createContext, useContext, useEffect, useState, useCallback } from 'react'
 import axios from 'axios';
-import { type } from '@testing-library/user-event/dist/type';
-import { Message } from '@material-ui/icons';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const Crypto = createContext()
 const CryptoContext = ( {children}) => {
@@ -19,6 +18,26 @@ const [alert, setAlert] = useState({
     Message: '',
     type: 'success',
 })
+const[watchlist, setWatchlist] = useState([]);
+
+useEffect(() => {
+    if (user) {
+        const coinRef =doc(db, "watchlist", user.uid);
+
+       var unsubscribe =  onSnapshot(coinRef, coin  => {
+            if (coin.exists()) {
+                console.log(coin.data().coins);
+                setWatchlist(coin.data().coins);
+            } else {
+                console.log("No watchlist data found for the user.");
+            }
+        });
+        return () => {
+            unsubscribe();
+        };
+    }
+   
+}, [user]);
 
 useEffect(() => {
     onAuthStateChanged(auth, user => {
@@ -57,7 +76,7 @@ const fetchCoins = useCallback(async () => {
         }
     }, [currency]);
 
-  return <Crypto.Provider value={{currency, symbol, setCurrency, coins, loading, fetchCoins,alert, setAlert, user}}>
+  return <Crypto.Provider value={{currency, symbol, setCurrency, coins, loading, fetchCoins,alert, setAlert, user, watchlist}}>
     {children}
     </Crypto.Provider>
   
